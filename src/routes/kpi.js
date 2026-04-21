@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { calculateKPI } = require('../controllers/kpiController');
+const { calculateKPI } = require('../src/controllers/kpiController');
 
 // POST /api/calculate-kpi
 router.post('/calculate-kpi', calculateKPI);
