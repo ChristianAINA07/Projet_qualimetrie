@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>KPI Calculator</title>
+</head>
+<body>
+
+<h1>Calcul KPI</h1>
+
+<form id="kpiForm">
+    <input type="number" id="newRevenue" placeholder="Nouveau CA" required><br><br>
+    <input type="number" id="oldRevenue" placeholder="Ancien CA" required><br><br>
+    <input type="number" step="0.01" id="churnRate" placeholder="Churn (ex: 0.06)" required><br><br>
+
+    <label>Startup :</label>
+    <select id="isStartup">
+        <option value="true">Oui</option>
+        <option value="false">Non</option>
+    </select><br><br>
+
+    <input type="number" id="views" placeholder="Nombre de vues"><br><br>
+
+    <button type="submit">Calculer</button>
+</form>
+
+<h2>Résultat :</h2>
+<div id="result"></div>
+
+<script>
+document.getElementById("kpiForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+        newRevenue: Number(document.getElementById("newRevenue").value),
+        oldRevenue: Number(document.getElementById("oldRevenue").value),
+        churnRate: Number(document.getElementById("churnRate").value),
+        isStartup: document.getElementById("isStartup").value === "true",
+        views: Number(document.getElementById("views").value)
+    };
+
+    const response = await fetch('/api/calculate-kpi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    document.getElementById("result").innerHTML = `
+        Croissance: ${result.growth}<br>
+        Statut: ${result.status}<br>
+        Revenu projeté: ${result.projectedRevenue}
+    `;
+});
+</script>
+
+</body>
+</html>
