@@ -2,9 +2,24 @@
   "name": "projet_qualimetrie",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "test": "jest --coverage"
+  },
+  "jest": {
+    "testMatch": [
+      "**/tests/**/*.tests.js"
+    ],
+    "coverageReporters": [
+      "lcov",
+      "text",
+      "html"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/tests/**"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -13,7 +28,7 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "eslint": "^10.2.1",
-    "jest": "^30.3.0"
+    "jest": "^30.3.0",
+    "supertest": "^7.2.2"
   }
 }
