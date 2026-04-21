@@ -1,59 +1,183 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>KPI Calculator</title>
-</head>
-<body>
 
-<h1>Calcul KPI</h1>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Mono',monospace;background:transparent;padding:1.5rem 0.5rem}
+.header{margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:2px solid #6c63ff}
+.header h1{font-family:'DM Serif Display',serif;font-size:2.1rem;font-weight:400;color:#1a1a2e;letter-spacing:-0.5px;line-height:1.1}
+.header h1 em{color:#6c63ff;font-style:italic}
+.header p{font-size:11px;color:#888;margin-top:5px;letter-spacing:0.1em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;color:#6c63ff;text-transform:uppercase;letter-spacing:0.09em;font-weight:500}
+.field input,.field select{background:#f4f3ff;border:1.5px solid #c4bfff;border-radius:9px;padding:11px 14px;font-family:'DM Mono',monospace;font-size:14px;color:#1a1a2e;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:#6c63ff;box-shadow:0 0 0 3px #6c63ff22}
+.field input::placeholder{color:#bbb}
+.toggle-row{display:flex;gap:8px}
+.toggle-btn{flex:1;padding:10px 8px;background:#f4f3ff;border:1.5px solid #c4bfff;border-radius:9px;font-family:'DM Mono',monospace;font-size:13px;color:#888;cursor:pointer;transition:all .2s;text-align:center}
+.toggle-btn.active{background:#6c63ff;border-color:#6c63ff;color:#fff;box-shadow:0 3px 12px #6c63ff44}
+.calc-btn{width:100%;padding:14px;background:linear-gradient(135deg,#6c63ff,#48c9b0);color:#fff;border:none;border-radius:10px;font-family:'DM Mono',monospace;font-size:14px;font-weight:500;cursor:pointer;letter-spacing:0.06em;transition:opacity .2s,transform .1s;margin-top:0.25rem}
+.calc-btn:hover{opacity:0.9}
+.calc-btn:active{transform:scale(0.98)}
+.divider{height:2px;background:linear-gradient(90deg,#6c63ff,#48c9b0,transparent);border-radius:2px;margin:1.5rem 0}
+.results{display:none}
+.results.show{display:block}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+.kpi-card{border-radius:12px;padding:1rem 0.75rem;text-align:center;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:-20px;right:-20px;width:60px;height:60px;border-radius:50%;opacity:0.12}
+.kpi-card.blue{background:#eef2ff;border:1.5px solid #6c63ff44}
+.kpi-card.blue::before{background:#6c63ff}
+.kpi-card.teal{background:#e6faf7;border:1.5px solid #48c9b044}
+.kpi-card.teal::before{background:#48c9b0}
+.kpi-card.amber{background:#fff8e6;border:1.5px solid #f5a62344}
+.kpi-card.amber::before{background:#f5a623}
+.kpi-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:6px}
+.kpi-value{font-size:1.45rem;font-family:'DM Serif Display',serif;color:#1a1a2e}
+.kpi-value.pos{color:#0f9b6e}
+.kpi-value.neg{color:#e05252}
+.kpi-unit{font-size:11px;color:#aaa;margin-top:2px}
+.status-banner{border-radius:11px;padding:1rem 1.25rem;display:flex;align-items:center;gap:14px;margin-bottom:1.25rem;border-left:4px solid}
+.status-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.status-label{font-size:12px;text-transform:uppercase;letter-spacing:0.09em;font-weight:500}
+.status-desc{font-size:13px;margin-top:3px;opacity:0.8}
+.bar-section{margin-bottom:1rem}
+.bar-label{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em}
+.bar-track{height:9px;background:#f0f0f0;border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .9s cubic-bezier(.4,0,.2,1)}
+.tip{font-size:12px;color:#666;border-left:3px solid #6c63ff;padding:10px 12px;background:#f4f3ff;border-radius:0 8px 8px 0;line-height:1.65;margin-top:0.25rem}
+.score-badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:500;margin-left:6px}
+</style>
 
-<form id="kpiForm">
-    <input type="number" id="newRevenue" placeholder="Nouveau CA" required><br><br>
-    <input type="number" id="oldRevenue" placeholder="Ancien CA" required><br><br>
-    <input type="number" step="0.01" id="churnRate" placeholder="Churn (ex: 0.06)" required><br><br>
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Calculateur KPI interactif</h2>
 
-    <label>Startup :</label>
-    <select id="isStartup">
-        <option value="true">Oui</option>
-        <option value="false">Non</option>
-    </select><br><br>
+<div class="header">
+  <h1>KPI <em>Calculator</em></h1>
+  <p>Analyse de performance business · v2</p>
+</div>
 
-    <input type="number" id="views" placeholder="Nombre de vues"><br><br>
+<div class="grid">
+  <div class="field">
+    <label>Nouveau CA (€)</label>
+    <input type="number" id="newRev" placeholder="ex: 120 000">
+  </div>
+  <div class="field">
+    <label>Ancien CA (€)</label>
+    <input type="number" id="oldRev" placeholder="ex: 100 000">
+  </div>
+  <div class="field">
+    <label>Taux de churn</label>
+    <input type="number" step="0.01" id="churn" placeholder="ex: 0.06">
+  </div>
+  <div class="field">
+    <label>Nombre de vues</label>
+    <input type="number" id="views" placeholder="ex: 5 000">
+  </div>
+  <div class="field full">
+    <label>Type d'entreprise</label>
+    <div class="toggle-row">
+      <div class="toggle-btn active" id="btnStartup" onclick="setStartup(true)">🚀 Startup</div>
+      <div class="toggle-btn" id="btnEstab" onclick="setStartup(false)">🏢 Établie</div>
+    </div>
+  </div>
+</div>
 
-    <button type="submit">Calculer</button>
-</form>
+<button class="calc-btn" onclick="calculate()">Calculer les KPIs →</button>
 
-<h2>Résultat :</h2>
-<div id="result"></div>
+<div class="divider"></div>
+
+<div class="results" id="results">
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Croissance</div>
+      <div class="kpi-value" id="kpiGrowth">—</div>
+      <div class="kpi-unit">vs période préc.</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Rétention</div>
+      <div class="kpi-value" id="kpiRetention">—</div>
+      <div class="kpi-unit">clients conservés</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Rev. projeté</div>
+      <div class="kpi-value" id="kpiProjected" style="font-size:1.15rem">—</div>
+      <div class="kpi-unit">prochaine période</div>
+    </div>
+  </div>
+
+  <div class="status-banner" id="statusBanner">
+    <div class="status-dot" id="statusDot"></div>
+    <div>
+      <div class="status-label" id="statusLabel"></div>
+      <div class="status-desc" id="statusDesc"></div>
+    </div>
+  </div>
+
+  <div class="bar-section">
+    <div class="bar-label"><span>Performance globale</span><span id="scoreVal">—</span></div>
+    <div class="bar-track"><div class="bar-fill" id="scoreFill" style="width:0%"></div></div>
+  </div>
+  <div class="bar-section" style="margin-bottom:1.25rem">
+    <div class="bar-label"><span>Santé rétention</span><span id="retVal">—</span></div>
+    <div class="bar-track"><div class="bar-fill" id="retFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="tip" id="tipText"></div>
+</div>
 
 <script>
-document.getElementById("kpiForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+let isStartup=true;
+function setStartup(v){
+  isStartup=v;
+  document.getElementById('btnStartup').className='toggle-btn'+(v?' active':'');
+  document.getElementById('btnEstab').className='toggle-btn'+(!v?' active':'');
+}
+function fmt(n){return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(n)}
+function barColor(v){return v>70?'linear-gradient(90deg,#48c9b0,#0f9b6e)':v>40?'linear-gradient(90deg,#f5a623,#e67e22)':'linear-gradient(90deg,#e05252,#c0392b)'}
+function calculate(){
+  const nR=parseFloat(document.getElementById('newRev').value)||0;
+  const oR=parseFloat(document.getElementById('oldRev').value)||1;
+  const ch=parseFloat(document.getElementById('churn').value)||0;
+  const vw=parseFloat(document.getElementById('views').value)||0;
+  if(!nR||!oR){alert('Veuillez saisir les deux CA.');return;}
+  const growth=((nR-oR)/oR)*100;
+  const retention=(1-ch)*100;
+  const projected=nR*(1+(growth/100))*(1-ch);
+  const threshold=isStartup?15:5;
+  const score=Math.min(100,Math.max(0,(growth/threshold)*50+(retention-50)));
+  const sc=Math.round(score);
+  const rr=Math.min(100,Math.round(retention));
 
-    const data = {
-        newRevenue: Number(document.getElementById("newRevenue").value),
-        oldRevenue: Number(document.getElementById("oldRevenue").value),
-        churnRate: Number(document.getElementById("churnRate").value),
-        isStartup: document.getElementById("isStartup").value === "true",
-        views: Number(document.getElementById("views").value)
-    };
+  document.getElementById('kpiGrowth').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
+  document.getElementById('kpiGrowth').className='kpi-value '+(growth>=0?'pos':'neg');
+  document.getElementById('kpiRetention').textContent=rr+'%';
+  document.getElementById('kpiProjected').textContent=fmt(Math.round(projected))+'€';
 
-    const response = await fetch('/api/calculate-kpi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
+  let status,desc,dotC,bg,border,col;
+  if(growth>=threshold&&retention>=80){
+    status='Excellent 🟢';desc='Croissance solide, rétention maîtrisée.';dotC='#0f9b6e';bg='#e6faf7';border='#0f9b6e';col='#065f46';
+  }else if(growth>=0&&retention>=60){
+    status='Stable 🟡';desc='Performance correcte — des marges d\'amélioration existent.';dotC='#f5a623';bg='#fff8e6';border='#f5a623';col='#78350f';
+  }else{
+    status='Attention 🔴';desc='Croissance ou rétention sous les seuils critiques.';dotC='#e05252';bg='#fff0f0';border='#e05252';col='#7f1d1d';
+  }
+  const b=document.getElementById('statusBanner');
+  b.style.background=bg;b.style.borderLeftColor=border;
+  document.getElementById('statusDot').style.background=dotC;
+  const sl=document.getElementById('statusLabel');sl.style.color=col;sl.textContent=status;
+  const sd=document.getElementById('statusDesc');sd.style.color=col;sd.textContent=desc;
 
-    const result = await response.json();
+  document.getElementById('scoreVal').textContent=sc+'%';
+  const sf=document.getElementById('scoreFill');sf.style.width=sc+'%';sf.style.background=barColor(sc);
+  document.getElementById('retVal').textContent=rr+'%';
+  const rf=document.getElementById('retFill');rf.style.width=rr+'%';rf.style.background=barColor(rr);
 
-    document.getElementById("result").innerHTML = `
-        Croissance: ${result.growth}<br>
-        Statut: ${result.status}<br>
-        Revenu projeté: ${result.projectedRevenue}
-    `;
-});
+  const tips=[];
+  if(ch>0.1)tips.push('⚠ Churn élevé ('+((ch*100).toFixed(0))+'%) — analysez les causes de désabonnement.');
+  if(growth<threshold)tips.push('📈 '+(isStartup?'Startup':'Établie')+' : cible de croissance recommandée = '+threshold+'%.');
+  if(vw>0)tips.push('👁 Taux de conv. estimé : '+(nR/vw*100).toFixed(2)+'% par vue.');
+  if(!tips.length)tips.push('✅ Bonne trajectoire globale. Maintenez le cap !');
+  document.getElementById('tipText').textContent=tips.join('  ·  ');
+  document.getElementById('results').className='results show';
+}
 </script>
-
-</body>
-</html>
