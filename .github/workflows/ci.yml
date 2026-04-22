@@ -1,0 +1,49 @@
+name: CI Quality Pipeline
+
+on:
+  push:
+    branches: [ "main", "master", "ci/cd" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Récupérer le code
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Important pour l'historique SonarCloud
+
+      # 2️⃣ Installer Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3️⃣ Installer les dépendances (faster + plus fiable que npm install)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Lancer le linter ESLint (ne pas bloquer si échec pour ce TP)
+      - name: Run Linter
+        run: npm run lint || true
+
+      # 5️⃣ Lancer les tests avec génération du rapport de couverture
+      - name: Run Tests with Coverage
+        run: npm test
+
+      # 6️⃣ Analyse SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/tests/**,**/node_modules/**,**/public/**
